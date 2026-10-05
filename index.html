@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111013">
+  <meta name="description" content="Conoce cómo jugar en movilador conectando un teclado y un mouse a tu móvil o tablet.">
+  <title>Jugar en movilador | GG Mapeadores</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="GG Mapeadores, inicio">
+      <span class="brand-mark" aria-hidden="true">GG</span>
+      <span class="brand-name">MAPEADORES<span class="brand-dot">.</span></span>
+    </a>
+    <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-controls="site-menu" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <nav class="top-nav" id="site-menu" aria-label="Navegación principal">
+      <a class="nav-link active" href="index.html" aria-current="page">Inicio</a>
+      <span class="nav-divider" aria-hidden="true"></span>
+      <a class="nav-link" href="mapeadores.html">Mapeadores</a>
+      <a class="nav-link" href="metodo-120.html">120 FPS</a>
+      <a class="nav-link" href="colaboradores.html">Colaboradores</a>
+      <a class="nav-link" href="comunidad.html">Comunidad</a>
+    </nav>
+  </header>
+
+  <main id="inicio">
+    <section class="intro" aria-labelledby="page-title">
+      <div class="intro-copy">
+        <p class="eyebrow"><span class="eyebrow-line"></span> JUEGA A TU MANERA <span class="eyebrow-count">01 / 02</span></p>
+        <h1 id="page-title">JUGAR EN<br><span class="title-accent">MOVILADOR</span><span class="title-period">.</span></h1>
+        <p class="intro-description">Lleva los controles de teclado y mouse a tu teléfono o tablet y descubre otra forma de jugar.</p>
+        <a class="browse-link" href="#que-es"><span class="browse-arrow" aria-hidden="true">↓</span> DESCUBRE CÓMO FUNCIONA</a>
+      </div>
+      <div class="intro-aside guide-aside" aria-label="Elementos de un movilador">
+        <span class="aside-label">TU EQUIPO</span>
+        <span class="aside-number guide-symbol">⌘</span>
+        <span class="aside-caption">móvil + teclado + mouse</span>
+        <span class="aside-rule"></span>
+        <span class="aside-note">UNA CONFIGURACIÓN<br>A TU MEDIDA</span>
+      </div>
+      <span class="intro-index" aria-hidden="true">GG / GUÍA</span>
+    </section>
+
+    <section class="guide" id="que-es" aria-labelledby="guide-title">
+      <div class="guide-heading" data-reveal>
+        <div>
+          <p class="section-kicker">LA IDEA</p>
+          <h2 id="guide-title">¿Qué es jugar en movilador?</h2>
+        </div>
+        <p class="guide-lead">Un movilador es una forma de jugar desde un teléfono o una tablet usando un teclado y un mouse como controles, en lugar de depender únicamente de la pantalla táctil.</p>
+      </div>
+
+      <div class="guide-body">
+        <article class="guide-copy" data-reveal>
+          <h3>Controles de escritorio, en formato móvil</h3>
+          <p>Normalmente se conectan los periféricos al celular mediante un adaptador OTG o un hub USB compatible. Si el teléfono lo permite, el hub puede conectar al mismo tiempo un teclado y un mouse; algunos también admiten carga u otros accesorios.</p>
+          <p>En juegos que no reconocen directamente esos periféricos, un mapeador puede ayudar a relacionar teclas y botones del mouse con zonas o acciones de la pantalla táctil. Así puedes configurar controles a tu gusto y jugar con una postura y una distribución que te resulten cómodas.</p>
+          <p>La experiencia depende del modelo del dispositivo, del adaptador, del juego y de la compatibilidad de la aplicación de mapeo. Cada juego puede tener reglas propias sobre el uso de estas herramientas, así que conviene revisarlas antes de configurarlas.</p>
+          <a class="guide-cta" href="mapeadores.html">VER MAPEADORES ACTUALES <span aria-hidden="true">↗</span></a>
+        </article>
+
+        <aside class="guide-side" aria-label="Elementos y pasos básicos" data-reveal>
+          <div class="guide-block">
+            <p class="section-kicker">LO QUE NECESITAS</p>
+            <ul class="needs-list">
+              <li><span>01</span> Un teléfono o tablet compatible</li>
+              <li><span>02</span> Un adaptador OTG o hub USB</li>
+              <li><span>03</span> Teclado y mouse USB o inalámbricos</li>
+            </ul>
+          </div>
+          <div class="guide-block">
+            <p class="section-kicker">PARA EMPEZAR</p>
+            <ol class="steps-list">
+              <li><span>01</span><p>Conecta el adaptador OTG o hub al dispositivo.</p></li>
+              <li><span>02</span><p>Enlaza el teclado y el mouse al adaptador.</p></li>
+              <li><span>03</span><p>Abre un mapeador compatible y ajusta los controles disponibles.</p></li>
+            </ol>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <span>GG MAPEADORES <span class="footer-divider">/</span> GUÍA DE JUEGO</span>
+    <a class="footer-link" href="mapeadores.html">IR A MAPEADORES ↗</a>
+    <a class="footer-link" href="colaboradores.html">COLABORADORES ↗</a>
+    <a class="footer-link" href="comunidad.html">COMUNIDAD ↗</a>
+  </footer>
+</body>
+</html>
