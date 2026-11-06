@@ -183,7 +183,7 @@ kbd { display: grid; place-items: center; width: 18px; height: 19px; border: 1px
 .community-options { padding: 38px 0 48px; }
 .community-heading { margin-bottom: 16px; }
 .community-heading h2 { margin: 0; font: 700 34px/1 var(--font-display); }
-.community-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.community-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .community-option { min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); transition: border-color .2s ease; }
 .community-option:hover { border-color: #635176; }
 .community-platform { margin: 0 0 8px; color: #9bd2a7; font-size: 9px; font-weight: 700; }
@@ -224,6 +224,99 @@ kbd { display: grid; place-items: center; width: 18px; height: 19px; border: 1px
 .footer-link:hover, .discord-link:hover, .whatsapp-group-link:hover { color: var(--text); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 [hidden] { display: none !important; }
+
+.tryjean-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(166, 83, 255, .18), transparent 28rem),
+    #100d16;
+}
+.tryjean-page .topbar { border-bottom-color: rgba(215, 177, 82, .25); }
+.profile-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(216, 180, 91, .55);
+  border-radius: 4px;
+  color: #d8b45b;
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+.profile-back:hover { color: #f5df9b; border-color: #f5df9b; background: rgba(216, 180, 91, .1); transform: translateY(-1px); }
+.profile-main {
+  width: min(100% - 36px, 560px);
+  margin: 0 auto;
+  padding: 46px 0 52px;
+}
+.profile-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(215, 177, 82, .52);
+  border-radius: 12px;
+  background: rgba(21, 17, 29, .92);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .45), 0 0 45px rgba(126, 54, 194, .13);
+}
+.profile-art {
+  position: relative;
+  height: 155px;
+  background:
+    linear-gradient(180deg, rgba(16, 13, 22, .08), #15111d),
+    url("TryJeanPc.jpg") center 42% / cover;
+  filter: saturate(1.05);
+}
+.profile-art::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 155px;
+  background: linear-gradient(115deg, rgba(224, 187, 84, .16), transparent 38%, rgba(154, 74, 232, .24));
+}
+.profile-content {
+  position: relative;
+  padding: 0 28px 27px;
+  text-align: center;
+}
+.profile-avatar {
+  display: block;
+  width: 112px;
+  height: 112px;
+  margin: -56px auto 16px;
+  border: 3px solid #d8b45b;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 5px #15111d, 0 10px 24px rgba(0, 0, 0, .4);
+}
+.profile-kicker { margin: 0 0 7px; color: #d8b45b; font-size: 9px; font-weight: 700; letter-spacing: .08em; }
+.profile-content h1 { font-size: 48px; color: #f5f0f8; }
+.profile-handle { margin: 4px 0 0; color: #b896ef; font-size: 12px; }
+.profile-bio { max-width: 360px; margin: 17px auto 24px; color: #b8afc0; font-size: 12px; line-height: 1.6; }
+.profile-links { display: grid; gap: 12px; }
+.profile-link {
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  border: 1px solid rgba(216, 180, 91, .55);
+  border-radius: 5px;
+  color: #f9f5fc;
+  background: rgba(255, 255, 255, .045);
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+.profile-link:hover { transform: translateY(-2px); border-color: #f5df9b; background: rgba(186, 114, 255, .17); }
+.profile-link-icon { color: #e5c76f; font-size: 17px; }
+.profile-link-tiktok { border-color: rgba(184, 150, 239, .62); }
+.profile-link-tiktok .profile-link-icon { color: #d5b8ff; }
+.profile-link-mappers { border-color: rgba(216, 180, 91, .42); }
+.profile-link-mappers .profile-link-icon { color: #d8b45b; }
+.profile-footer { margin: 26px 0 0; color: #746a7d; font-size: 9px; font-weight: 700; letter-spacing: .08em; }
 
 @keyframes reveal { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes row-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -301,6 +394,18 @@ kbd { display: grid; place-items: center; width: 18px; height: 19px; border: 1px
   .note-mark { flex: 0 0 15px; }
   .footer { min-height: 58px; font-size: 8px; }
   .footer-link, .discord-link, .whatsapp-group-link { font-size: 8px; }
+  .profile-main { padding-top: 30px; }
+  .profile-content { padding-inline: 16px; }
+  .profile-content h1 { font-size: 43px; }
+  .profile-link { font-size: 9px; }
+  .tryjean-page .topbar { width: min(100% - 24px, 520px); }
+  .profile-back { min-height: 32px; padding-inline: 9px; font-size: 9px; }
+  .profile-main { width: min(100% - 24px, 520px); padding-bottom: 30px; }
+  .profile-art, .profile-art::after { height: 125px; }
+  .profile-avatar { width: 96px; height: 96px; margin-top: -48px; }
+  .profile-content h1 { font-size: clamp(38px, 12vw, 48px); }
+  .profile-bio { font-size: 11px; }
+  .profile-link { grid-template-columns: 21px minmax(0, 1fr) 14px; min-height: 50px; padding-inline: 11px; }
 }
 @media (max-width: 380px) {
   .topbar, main, .footer { width: calc(100% - 28px); }
