@@ -106,6 +106,7 @@ kbd { display: grid; place-items: center; width: 18px; height: 19px; border: 1px
 .mapper-folder { min-width: 0; overflow: hidden; border: 1px solid var(--line); background: rgba(255,255,255,.012); transition: border-color .18s ease, background .18s ease; }
 .mapper-folder-group { grid-column: 1 / -1; }
 .mapper-contents { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+.mapper-folder-gg .mapper-contents { grid-template-columns: minmax(0, 1fr); }
 .mapper-folder:hover, .mapper-folder[open] { border-color: #635176; background: rgba(173,123,255,.035); }
 .mapper-folder-summary { min-height: 70px; display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; list-style: none; }
 .mapper-folder-summary::-webkit-details-marker { display: none; }
