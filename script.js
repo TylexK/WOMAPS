@@ -90,9 +90,11 @@ const musicPlayer = document.createElement("section");
 const musicAudio = document.createElement("audio");
 let musicTrackIndex = 0;
 let musicHasStarted = false;
+let musicAutoplayPending = true;
 
 musicPlayer.className = "music-player";
 musicPlayer.setAttribute("aria-label", "Reproductor de música");
+musicAudio.autoplay = true;
 musicPlayer.innerHTML = `
   <div class="music-player-info">
     <span class="music-player-title"></span>
@@ -138,7 +140,7 @@ function setMusicTrack(index, shouldPlay = false) {
     if (Number.isFinite(savedTime) && savedTime > 0 && savedTime < musicAudio.duration) {
       musicAudio.currentTime = savedTime;
     }
-    if (shouldPlay || musicState.isPlaying) {
+    if (shouldPlay || musicAutoplayPending) {
       musicAudio.play().catch(() => {
         musicPlayButton.textContent = "▶";
         musicPlayButton.setAttribute("aria-label", "Reproducir música");
@@ -177,7 +179,7 @@ async function loadMusicTracks() {
 
   const savedTrackIndex = musicTracks.indexOf(musicState.trackName);
   musicTrackIndex = savedTrackIndex >= 0 ? savedTrackIndex : Math.floor(Math.random() * musicTracks.length);
-  setMusicTrack(musicTrackIndex, musicState.isPlaying !== false);
+  setMusicTrack(musicTrackIndex, true);
 }
 
 function updateMusicButton() {
@@ -190,6 +192,7 @@ musicAudio.volume = Number.isFinite(musicState.volume) ? musicState.volume : 0.1
 musicVolume.value = String(musicAudio.volume);
 loadMusicTracks();
 musicPlayButton.addEventListener("click", () => {
+  musicAutoplayPending = false;
   if (musicAudio.paused) musicAudio.play().catch(() => {});
   else musicAudio.pause();
 });
@@ -201,6 +204,7 @@ musicVolume.addEventListener("input", () => {
 });
 musicAudio.addEventListener("play", () => {
   musicHasStarted = true;
+  musicAutoplayPending = false;
   updateMusicButton();
   saveMusicState();
 });
@@ -213,6 +217,11 @@ musicAudio.addEventListener("timeupdate", () => {
 });
 musicAudio.addEventListener("ended", () => setRandomMusicTrack(true));
 window.addEventListener("pagehide", saveMusicState);
+document.addEventListener("pointerdown", () => {
+  if (musicAutoplayPending && musicAudio.paused) {
+    musicAudio.play().catch(() => {});
+  }
+}, { once: true });
 updateMusicButton();
 
 const hoverSoundTargets = document.querySelectorAll(
