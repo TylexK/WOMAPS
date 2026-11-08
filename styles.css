@@ -507,7 +507,15 @@ kbd { display: grid; place-items: center; width: 18px; height: 19px; border: 1px
 .music-player-button:active { transform: translateY(0) scale(.9); }
 .music-play { border: 1px solid rgba(173, 123, 255, .5); }
 .music-volume-label { display: flex; align-items: center; gap: 6px; margin-left: 5px; font-size: 12px; }
-.music-volume-label > span { color: var(--purple-bright); }
+.music-volume-toggle {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--purple-bright);
+  cursor: pointer;
+  font-size: 12px;
+}
+.music-volume-toggle:hover { transform: scale(1.15); }
 .music-volume { width: 70px; accent-color: var(--purple); cursor: pointer; }
 @keyframes music-line {
   0%, 100% { opacity: .45; transform: scaleX(.35); }

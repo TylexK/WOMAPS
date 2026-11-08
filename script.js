@@ -112,7 +112,7 @@ musicPlayer.innerHTML = `
     <button class="music-player-button music-play" type="button" aria-label="Reproducir música">▶</button>
     <button class="music-player-button music-next" type="button" aria-label="Siguiente canción">⏭</button>
     <label class="music-volume-label">
-      <span aria-hidden="true">🔊</span>
+      <button class="music-volume-toggle" type="button" aria-label="Activar sonido">🔊</button>
       <input class="music-volume" type="range" min="0" max="1" step="0.01" aria-label="Volumen de música">
     </label>
   </div>
@@ -126,6 +126,7 @@ const musicPlayButton = musicPlayer.querySelector(".music-play");
 const musicPreviousButton = musicPlayer.querySelector(".music-previous");
 const musicNextButton = musicPlayer.querySelector(".music-next");
 const musicVolume = musicPlayer.querySelector(".music-volume");
+const musicVolumeToggle = musicPlayer.querySelector(".music-volume-toggle");
 const musicProgress = musicPlayer.querySelector(".music-progress");
 const musicTime = musicPlayer.querySelector(".music-time");
 
@@ -205,6 +206,8 @@ async function loadMusicTracks() {
 function updateMusicButton() {
   const isPlaying = !musicAudio.paused;
   musicPlayer.classList.toggle("music-muted", musicAudio.muted);
+  musicVolumeToggle.textContent = musicAudio.muted || musicAudio.volume === 0 ? "🔇" : "🔊";
+  musicVolumeToggle.setAttribute("aria-label", musicAudio.muted ? "Activar sonido" : "Silenciar música");
   musicPlayButton.textContent = isPlaying ? "Ⅱ" : "▶";
   musicPlayButton.setAttribute(
     "aria-label",
@@ -237,6 +240,20 @@ musicPreviousButton.addEventListener("click", () => setRandomMusicTrack(true));
 musicNextButton.addEventListener("click", () => setRandomMusicTrack(true));
 musicVolume.addEventListener("input", () => {
   musicAudio.volume = Number(musicVolume.value);
+  if (musicAudio.volume > 0) {
+    musicAutoplayPending = false;
+    musicAudio.muted = false;
+    if (musicAudio.paused) musicAudio.play().catch(() => {});
+  }
+  updateMusicButton();
+  saveMusicState();
+});
+musicVolumeToggle.addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  musicAudio.muted = !musicAudio.muted;
+  if (!musicAudio.muted && musicAudio.paused) musicAudio.play().catch(() => {});
+  updateMusicButton();
   saveMusicState();
 });
 musicProgress.addEventListener("input", () => {
