@@ -101,6 +101,10 @@ musicAudio.setAttribute("playsinline", "");
 musicPlayer.innerHTML = `
   <div class="music-player-info">
     <span class="music-player-title"></span>
+    <div class="music-player-progress">
+      <input class="music-progress" type="range" min="0" max="100" step="0.1" value="0" aria-label="Progreso de la canción">
+      <span class="music-time">0:00</span>
+    </div>
   </div>
   <div class="music-player-controls">
     <button class="music-player-button music-previous" type="button" aria-label="Canción anterior">⏮</button>
@@ -121,6 +125,15 @@ const musicPlayButton = musicPlayer.querySelector(".music-play");
 const musicPreviousButton = musicPlayer.querySelector(".music-previous");
 const musicNextButton = musicPlayer.querySelector(".music-next");
 const musicVolume = musicPlayer.querySelector(".music-volume");
+const musicProgress = musicPlayer.querySelector(".music-progress");
+const musicTime = musicPlayer.querySelector(".music-time");
+
+function formatMusicTime(seconds) {
+  if (!Number.isFinite(seconds)) return "0:00";
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60).toString().padStart(2, "0");
+  return `${minutes}:${remainingSeconds}`;
+}
 
 function saveMusicState() {
   localStorage.setItem(musicStateKey, JSON.stringify({
@@ -139,6 +152,8 @@ function setMusicTrack(index, shouldPlay = false) {
   musicAudio.load();
   musicTitle.textContent = musicTracks[musicTrackIndex].replace(/\.(mp3|wav|ogg|m4a|aac|flac)$/i, "");
   musicAudio.addEventListener("loadedmetadata", () => {
+    musicProgress.value = "0";
+    musicTime.textContent = `0:00 / ${formatMusicTime(musicAudio.duration)}`;
     const savedTime = musicState.trackName === musicTracks[musicTrackIndex] ? Number(musicState.currentTime) : 0;
     if (Number.isFinite(savedTime) && savedTime > 0 && savedTime < musicAudio.duration) {
       musicAudio.currentTime = savedTime;
@@ -196,24 +211,33 @@ function updateMusicButton() {
 function activateMusic() {
   musicAutoplayPending = false;
   musicAudio.muted = false;
-  musicAudio.play().then(updateMusicButton).catch(() => {
+  musicAudio.play().then(updateMusicButton).catch((error) => {
+    console.error("No se pudo reproducir la música.", error);
     musicPlayButton.textContent = "▶";
     musicPlayButton.setAttribute("aria-label", "Reproducir música");
   });
 }
 
+function toggleMusic(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (musicAudio.paused || musicAudio.muted) activateMusic();
+  else musicAudio.pause();
+}
+
 musicAudio.volume = Number.isFinite(musicState.volume) ? musicState.volume : 0.12;
 musicVolume.value = String(musicAudio.volume);
 loadMusicTracks();
-musicPlayButton.addEventListener("click", () => {
-  if (musicAudio.paused || musicAudio.muted) activateMusic();
-  else musicAudio.pause();
-});
+musicPlayButton.addEventListener("click", toggleMusic);
 musicPreviousButton.addEventListener("click", () => setRandomMusicTrack(true));
 musicNextButton.addEventListener("click", () => setRandomMusicTrack(true));
 musicVolume.addEventListener("input", () => {
   musicAudio.volume = Number(musicVolume.value);
   saveMusicState();
+});
+musicProgress.addEventListener("input", () => {
+  if (!Number.isFinite(musicAudio.duration)) return;
+  musicAudio.currentTime = (Number(musicProgress.value) / 100) * musicAudio.duration;
 });
 musicAudio.addEventListener("play", () => {
   musicHasStarted = true;
@@ -225,12 +249,17 @@ musicAudio.addEventListener("pause", () => {
   saveMusicState();
 });
 musicAudio.addEventListener("timeupdate", () => {
+  if (Number.isFinite(musicAudio.duration) && musicAudio.duration > 0) {
+    musicProgress.value = String((musicAudio.currentTime / musicAudio.duration) * 100);
+    musicTime.textContent = `${formatMusicTime(musicAudio.currentTime)} / ${formatMusicTime(musicAudio.duration)}`;
+  }
   if (musicHasStarted) saveMusicState();
 });
 musicAudio.addEventListener("ended", () => setRandomMusicTrack(true));
 window.addEventListener("pagehide", saveMusicState);
-document.addEventListener("pointerdown", activateMusic, { once: true });
-document.addEventListener("touchstart", activateMusic, { once: true, passive: true });
+document.addEventListener("pointerdown", (event) => {
+  if (!event.target.closest(".music-player")) activateMusic();
+}, { once: true });
 updateMusicButton();
 
 const hoverSoundTargets = document.querySelectorAll(
