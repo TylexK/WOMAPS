@@ -75,6 +75,249 @@ const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)
 const canAnimate = typeof Element.prototype.animate === "function";
 const revealItems = document.querySelectorAll("[data-reveal]");
 
+const fallbackMusicTracks = [
+  "Daniel Caesar - Superpowers (Official Audio) - DanielCaesarVEVO.mp3",
+  "Nafeesisboujee - Stephanie.mp3",
+  "Malcolm Todd - Earrings.mp3",
+  "Tyler, The Creator - SEE YOU AGAIN.mp3",
+  "Malcolm Todd - Sweet Boy.mp3",
+  "Djo - End Of Beginning .mp3",
+];
+let musicTracks = [];
+const musicStateKey = "gg-mapeadores-music";
+const musicState = JSON.parse(localStorage.getItem(musicStateKey) || "{}");
+const musicPlayer = document.createElement("section");
+const musicAudio = document.createElement("audio");
+let musicTrackIndex = 0;
+let musicHasStarted = false;
+
+musicPlayer.className = "music-player";
+musicPlayer.setAttribute("aria-label", "Reproductor de música");
+musicPlayer.innerHTML = `
+  <div class="music-player-info">
+    <span class="music-player-title"></span>
+  </div>
+  <div class="music-player-controls">
+    <button class="music-player-button music-previous" type="button" aria-label="Canción anterior">⏮</button>
+    <button class="music-player-button music-play" type="button" aria-label="Reproducir música">▶</button>
+    <button class="music-player-button music-next" type="button" aria-label="Siguiente canción">⏭</button>
+    <label class="music-volume-label">
+      <span aria-hidden="true">🔊</span>
+      <input class="music-volume" type="range" min="0" max="1" step="0.01" aria-label="Volumen de música">
+    </label>
+  </div>
+`;
+const topbarElement = document.querySelector(".topbar");
+if (topbarElement) topbarElement.insertAdjacentElement("afterend", musicPlayer);
+else document.body.append(musicPlayer);
+musicPlayer.append(musicAudio);
+const musicTitle = musicPlayer.querySelector(".music-player-title");
+const musicPlayButton = musicPlayer.querySelector(".music-play");
+const musicPreviousButton = musicPlayer.querySelector(".music-previous");
+const musicNextButton = musicPlayer.querySelector(".music-next");
+const musicVolume = musicPlayer.querySelector(".music-volume");
+
+function saveMusicState() {
+  localStorage.setItem(musicStateKey, JSON.stringify({
+    trackIndex: musicTrackIndex,
+    trackName: musicTracks[musicTrackIndex],
+    currentTime: musicAudio.currentTime,
+    volume: musicAudio.volume,
+    isPlaying: !musicAudio.paused,
+  }));
+}
+
+function setMusicTrack(index, shouldPlay = false) {
+  if (musicTracks.length === 0) return;
+  musicTrackIndex = (index + musicTracks.length) % musicTracks.length;
+  musicAudio.src = `Music/${encodeURIComponent(musicTracks[musicTrackIndex])}`;
+  musicAudio.load();
+  musicTitle.textContent = musicTracks[musicTrackIndex].replace(/\.(mp3|wav|ogg|m4a|aac|flac)$/i, "");
+  musicAudio.addEventListener("loadedmetadata", () => {
+    const savedTime = musicState.trackName === musicTracks[musicTrackIndex] ? Number(musicState.currentTime) : 0;
+    if (Number.isFinite(savedTime) && savedTime > 0 && savedTime < musicAudio.duration) {
+      musicAudio.currentTime = savedTime;
+    }
+    if (shouldPlay || musicState.isPlaying) {
+      musicAudio.play().catch(() => {
+        musicPlayButton.textContent = "▶";
+        musicPlayButton.setAttribute("aria-label", "Reproducir música");
+      });
+    }
+  }, { once: true });
+}
+
+function setRandomMusicTrack(shouldPlay = false) {
+  if (musicTracks.length < 2) {
+    setMusicTrack(0, shouldPlay);
+    return;
+  }
+
+  let nextIndex = musicTrackIndex;
+  while (nextIndex === musicTrackIndex) {
+    nextIndex = Math.floor(Math.random() * musicTracks.length);
+  }
+  setMusicTrack(nextIndex, shouldPlay);
+}
+
+async function loadMusicTracks() {
+  try {
+    const response = await fetch("Music/");
+    if (!response.ok) throw new Error(`Music directory returned ${response.status}`);
+    const directoryHtml = await response.text();
+    const links = [...new DOMParser().parseFromString(directoryHtml, "text/html").querySelectorAll("a[href]")];
+    const discoveredTracks = links
+      .map((link) => decodeURIComponent(new URL(link.href).pathname.split("/").pop() || ""))
+      .filter((name) => /\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(name));
+    musicTracks = discoveredTracks.length > 0 ? discoveredTracks : fallbackMusicTracks;
+  } catch (error) {
+    console.error("No se pudieron descubrir las canciones de Music/. Se usará la lista de respaldo.", error);
+    musicTracks = fallbackMusicTracks;
+  }
+
+  const savedTrackIndex = musicTracks.indexOf(musicState.trackName);
+  musicTrackIndex = savedTrackIndex >= 0 ? savedTrackIndex : Math.floor(Math.random() * musicTracks.length);
+  setMusicTrack(musicTrackIndex);
+}
+
+function updateMusicButton() {
+  const isPlaying = !musicAudio.paused;
+  musicPlayButton.textContent = isPlaying ? "Ⅱ" : "▶";
+  musicPlayButton.setAttribute("aria-label", isPlaying ? "Pausar música" : "Reproducir música");
+}
+
+musicAudio.volume = Number.isFinite(musicState.volume) ? musicState.volume : 0.12;
+musicVolume.value = String(musicAudio.volume);
+loadMusicTracks();
+musicPlayButton.addEventListener("click", () => {
+  if (musicAudio.paused) musicAudio.play().catch(() => {});
+  else musicAudio.pause();
+});
+musicPreviousButton.addEventListener("click", () => setRandomMusicTrack(true));
+musicNextButton.addEventListener("click", () => setRandomMusicTrack(true));
+musicVolume.addEventListener("input", () => {
+  musicAudio.volume = Number(musicVolume.value);
+  saveMusicState();
+});
+musicAudio.addEventListener("play", () => {
+  musicHasStarted = true;
+  updateMusicButton();
+  saveMusicState();
+});
+musicAudio.addEventListener("pause", () => {
+  updateMusicButton();
+  saveMusicState();
+});
+musicAudio.addEventListener("timeupdate", () => {
+  if (musicHasStarted) saveMusicState();
+});
+musicAudio.addEventListener("ended", () => setRandomMusicTrack(true));
+window.addEventListener("pagehide", saveMusicState);
+updateMusicButton();
+
+const hoverSoundTargets = document.querySelectorAll(
+  ".mapper-row, .collaborator, .community-option, .guide-block, .fps-details, .collaborator-invite",
+);
+const folderSoundTargets = document.querySelectorAll(".mapper-folder-summary");
+let hoverAudioContext;
+let lastHoverSoundAt = 0;
+let lastFolderSoundAt = 0;
+
+function playHoverSound() {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return;
+
+  if (!hoverAudioContext) hoverAudioContext = new AudioContext();
+  if (hoverAudioContext.state === "suspended") {
+    hoverAudioContext.resume().then(playHoverSound);
+    return;
+  }
+
+  const now = performance.now();
+  if (now - lastHoverSoundAt < 55) return;
+  lastHoverSoundAt = now;
+
+  const startTime = hoverAudioContext.currentTime;
+  const oscillator = hoverAudioContext.createOscillator();
+  const noise = hoverAudioContext.createBufferSource();
+  const noiseBuffer = hoverAudioContext.createBuffer(1, Math.floor(hoverAudioContext.sampleRate * 0.045), hoverAudioContext.sampleRate);
+  const noiseData = noiseBuffer.getChannelData(0);
+  const gain = hoverAudioContext.createGain();
+  const noiseGain = hoverAudioContext.createGain();
+
+  for (let index = 0; index < noiseData.length; index += 1) {
+    noiseData[index] = (Math.random() * 2 - 1) * (1 - index / noiseData.length);
+  }
+
+  oscillator.type = "triangle";
+  oscillator.frequency.setValueAtTime(175, startTime);
+  oscillator.frequency.exponentialRampToValueAtTime(92, startTime + 0.07);
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.09, startTime + 0.004);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.08);
+
+  noiseGain.gain.setValueAtTime(0.0001, startTime);
+  noiseGain.gain.exponentialRampToValueAtTime(0.035, startTime + 0.002);
+  noiseGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.035);
+
+  oscillator.connect(gain).connect(hoverAudioContext.destination);
+  noise.connect(noiseGain).connect(hoverAudioContext.destination);
+  noise.buffer = noiseBuffer;
+  oscillator.start(startTime);
+  noise.start(startTime);
+  oscillator.stop(startTime + 0.09);
+  noise.stop(startTime + 0.045);
+}
+
+function playFolderSound() {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return;
+
+  if (!hoverAudioContext) hoverAudioContext = new AudioContext();
+  if (hoverAudioContext.state === "suspended") {
+    hoverAudioContext.resume().then(playFolderSound);
+    return;
+  }
+
+  const now = performance.now();
+  if (now - lastFolderSoundAt < 55) return;
+  lastFolderSoundAt = now;
+
+  const startTime = hoverAudioContext.currentTime;
+  const oscillator = hoverAudioContext.createOscillator();
+  const gain = hoverAudioContext.createGain();
+
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(640, startTime);
+  oscillator.frequency.exponentialRampToValueAtTime(980, startTime + 0.06);
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.07, startTime + 0.004);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.09);
+
+  oscillator.connect(gain).connect(hoverAudioContext.destination);
+  oscillator.start(startTime);
+  oscillator.stop(startTime + 0.1);
+}
+
+document.addEventListener("pointerdown", () => {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return;
+  if (!hoverAudioContext) hoverAudioContext = new AudioContext();
+  if (hoverAudioContext.state === "suspended") hoverAudioContext.resume();
+}, { once: true });
+
+for (const target of hoverSoundTargets) {
+  target.addEventListener("pointerenter", (event) => {
+    if (event.pointerType === "mouse") playHoverSound();
+  });
+}
+
+for (const target of folderSoundTargets) {
+  target.addEventListener("pointerenter", (event) => {
+    if (event.pointerType === "mouse") playFolderSound();
+  });
+}
+
 if (revealItems.length > 0 && "IntersectionObserver" in window && !prefersReducedMotion && canAnimate) {
   const revealObserver = new IntersectionObserver((entries) => {
     for (const entry of entries) {
