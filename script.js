@@ -93,6 +93,7 @@ let musicHasStarted = false;
 let musicAutoplayPending = true;
 let musicTrackRequest = 0;
 let musicTrackChanging = false;
+let musicPlaybackReachedEnd = false;
 
 musicPlayer.className = "music-player";
 musicPlayer.setAttribute("aria-label", "Reproductor de música");
@@ -152,6 +153,7 @@ function setMusicTrack(index, shouldPlay = false) {
   const requestId = musicTrackRequest + 1;
   musicTrackRequest = requestId;
   musicTrackChanging = true;
+  musicPlaybackReachedEnd = false;
   musicTrackIndex = (index + musicTracks.length) % musicTracks.length;
   musicAudio.src = `Music/${encodeURIComponent(musicTracks[musicTrackIndex])}`;
   musicTitle.textContent = musicTracks[musicTrackIndex].replace(/\.(mp3|wav|ogg|m4a|aac|flac)$/i, "");
@@ -238,8 +240,16 @@ musicAudio.volume = Number.isFinite(musicState.volume) ? musicState.volume : 0.1
 musicVolume.value = String(musicAudio.volume);
 loadMusicTracks();
 musicPlayButton.addEventListener("click", toggleMusic);
-musicPreviousButton.addEventListener("click", () => setRandomMusicTrack(true));
-musicNextButton.addEventListener("click", () => setRandomMusicTrack(true));
+musicPreviousButton.addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  if (!musicTrackChanging) setRandomMusicTrack(true);
+});
+musicNextButton.addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  if (!musicTrackChanging) setRandomMusicTrack(true);
+});
 musicVolume.addEventListener("input", () => {
   musicAudio.volume = Number(musicVolume.value);
   if (musicAudio.volume > 0) {
@@ -275,11 +285,12 @@ musicAudio.addEventListener("timeupdate", () => {
   if (Number.isFinite(musicAudio.duration) && musicAudio.duration > 0) {
     musicProgress.value = String((musicAudio.currentTime / musicAudio.duration) * 100);
     musicTime.textContent = `${formatMusicTime(musicAudio.currentTime)} / ${formatMusicTime(musicAudio.duration)}`;
+    if (musicAudio.currentTime >= musicAudio.duration - 0.5) musicPlaybackReachedEnd = true;
   }
   if (musicHasStarted) saveMusicState();
 });
 musicAudio.addEventListener("ended", () => {
-  if (!musicTrackChanging && musicAudio.duration > 0 && musicAudio.currentTime >= musicAudio.duration - 0.25) {
+  if (!musicTrackChanging && musicPlaybackReachedEnd) {
     setRandomMusicTrack(true);
   }
 });
