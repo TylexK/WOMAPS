@@ -95,6 +95,9 @@ let musicAutoplayPending = true;
 musicPlayer.className = "music-player";
 musicPlayer.setAttribute("aria-label", "Reproductor de música");
 musicAudio.autoplay = true;
+musicAudio.muted = true;
+musicAudio.preload = "auto";
+musicAudio.setAttribute("playsinline", "");
 musicPlayer.innerHTML = `
   <div class="music-player-info">
     <span class="music-player-title"></span>
@@ -164,16 +167,14 @@ function setRandomMusicTrack(shouldPlay = false) {
 
 async function loadMusicTracks() {
   try {
-    const response = await fetch("Music/");
+    const response = await fetch("music.json", { cache: "no-store" });
     if (!response.ok) throw new Error(`Music directory returned ${response.status}`);
-    const directoryHtml = await response.text();
-    const links = [...new DOMParser().parseFromString(directoryHtml, "text/html").querySelectorAll("a[href]")];
-    const discoveredTracks = links
-      .map((link) => decodeURIComponent(new URL(link.href).pathname.split("/").pop() || ""))
-      .filter((name) => /\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(name));
-    musicTracks = discoveredTracks.length > 0 ? discoveredTracks : fallbackMusicTracks;
+    const manifestTracks = await response.json();
+    if (!Array.isArray(manifestTracks)) throw new Error("music.json must contain an array");
+    musicTracks = manifestTracks.filter((name) => typeof name === "string" && /\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(name));
+    if (musicTracks.length === 0) throw new Error("music.json contains no audio files");
   } catch (error) {
-    console.error("No se pudieron descubrir las canciones de Music/. Se usará la lista de respaldo.", error);
+    console.error("No se pudo cargar music.json. Se usará la lista de respaldo.", error);
     musicTracks = fallbackMusicTracks;
   }
 
@@ -184,16 +185,28 @@ async function loadMusicTracks() {
 
 function updateMusicButton() {
   const isPlaying = !musicAudio.paused;
+  musicPlayer.classList.toggle("music-muted", musicAudio.muted);
   musicPlayButton.textContent = isPlaying ? "Ⅱ" : "▶";
-  musicPlayButton.setAttribute("aria-label", isPlaying ? "Pausar música" : "Reproducir música");
+  musicPlayButton.setAttribute(
+    "aria-label",
+    isPlaying && !musicAudio.muted ? "Pausar música" : "Activar música",
+  );
+}
+
+function activateMusic() {
+  musicAutoplayPending = false;
+  musicAudio.muted = false;
+  musicAudio.play().then(updateMusicButton).catch(() => {
+    musicPlayButton.textContent = "▶";
+    musicPlayButton.setAttribute("aria-label", "Reproducir música");
+  });
 }
 
 musicAudio.volume = Number.isFinite(musicState.volume) ? musicState.volume : 0.12;
 musicVolume.value = String(musicAudio.volume);
 loadMusicTracks();
 musicPlayButton.addEventListener("click", () => {
-  musicAutoplayPending = false;
-  if (musicAudio.paused) musicAudio.play().catch(() => {});
+  if (musicAudio.paused || musicAudio.muted) activateMusic();
   else musicAudio.pause();
 });
 musicPreviousButton.addEventListener("click", () => setRandomMusicTrack(true));
@@ -204,7 +217,6 @@ musicVolume.addEventListener("input", () => {
 });
 musicAudio.addEventListener("play", () => {
   musicHasStarted = true;
-  musicAutoplayPending = false;
   updateMusicButton();
   saveMusicState();
 });
@@ -217,11 +229,8 @@ musicAudio.addEventListener("timeupdate", () => {
 });
 musicAudio.addEventListener("ended", () => setRandomMusicTrack(true));
 window.addEventListener("pagehide", saveMusicState);
-document.addEventListener("pointerdown", () => {
-  if (musicAutoplayPending && musicAudio.paused) {
-    musicAudio.play().catch(() => {});
-  }
-}, { once: true });
+document.addEventListener("pointerdown", activateMusic, { once: true });
+document.addEventListener("touchstart", activateMusic, { once: true, passive: true });
 updateMusicButton();
 
 const hoverSoundTargets = document.querySelectorAll(
