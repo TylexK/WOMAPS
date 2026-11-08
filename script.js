@@ -91,6 +91,7 @@ const musicAudio = document.createElement("audio");
 let musicTrackIndex = 0;
 let musicHasStarted = false;
 let musicAutoplayPending = true;
+let musicTrackRequest = 0;
 
 musicPlayer.className = "music-player";
 musicPlayer.setAttribute("aria-label", "Reproductor de música");
@@ -147,24 +148,27 @@ function saveMusicState() {
 
 function setMusicTrack(index, shouldPlay = false) {
   if (musicTracks.length === 0) return;
+  const requestId = musicTrackRequest + 1;
+  musicTrackRequest = requestId;
   musicTrackIndex = (index + musicTracks.length) % musicTracks.length;
   musicAudio.src = `Music/${encodeURIComponent(musicTracks[musicTrackIndex])}`;
-  musicAudio.load();
   musicTitle.textContent = musicTracks[musicTrackIndex].replace(/\.(mp3|wav|ogg|m4a|aac|flac)$/i, "");
   musicAudio.addEventListener("loadedmetadata", () => {
+    if (requestId !== musicTrackRequest) return;
     musicProgress.value = "0";
     musicTime.textContent = `0:00 / ${formatMusicTime(musicAudio.duration)}`;
     const savedTime = musicState.trackName === musicTracks[musicTrackIndex] ? Number(musicState.currentTime) : 0;
     if (Number.isFinite(savedTime) && savedTime > 0 && savedTime < musicAudio.duration) {
       musicAudio.currentTime = savedTime;
     }
-    if (shouldPlay || musicAutoplayPending) {
+    if ((shouldPlay || musicAutoplayPending) && musicAudio.duration > 0) {
       musicAudio.play().catch(() => {
         musicPlayButton.textContent = "▶";
         musicPlayButton.setAttribute("aria-label", "Reproducir música");
       });
     }
   }, { once: true });
+  musicAudio.load();
 }
 
 function setRandomMusicTrack(shouldPlay = false) {
@@ -255,7 +259,11 @@ musicAudio.addEventListener("timeupdate", () => {
   }
   if (musicHasStarted) saveMusicState();
 });
-musicAudio.addEventListener("ended", () => setRandomMusicTrack(true));
+musicAudio.addEventListener("ended", () => {
+  if (musicAudio.duration > 0 && musicAudio.currentTime >= musicAudio.duration - 0.25) {
+    setRandomMusicTrack(true);
+  }
+});
 window.addEventListener("pagehide", saveMusicState);
 document.addEventListener("pointerdown", (event) => {
   if (!event.target.closest(".music-player")) activateMusic();
