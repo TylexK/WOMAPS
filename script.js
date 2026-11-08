@@ -94,6 +94,7 @@ let musicAutoplayPending = true;
 let musicTrackRequest = 0;
 let musicTrackChanging = false;
 let musicPlaybackReachedEnd = false;
+let musicTrackStartedAt = 0;
 
 musicPlayer.className = "music-player";
 musicPlayer.setAttribute("aria-label", "Reproductor de música");
@@ -154,6 +155,7 @@ function setMusicTrack(index, shouldPlay = false) {
   musicTrackRequest = requestId;
   musicTrackChanging = true;
   musicPlaybackReachedEnd = false;
+  musicTrackStartedAt = 0;
   musicTrackIndex = (index + musicTracks.length) % musicTracks.length;
   musicAudio.src = `Music/${encodeURIComponent(musicTracks[musicTrackIndex])}`;
   musicTitle.textContent = musicTracks[musicTrackIndex].replace(/\.(mp3|wav|ogg|m4a|aac|flac)$/i, "");
@@ -274,6 +276,7 @@ musicProgress.addEventListener("input", () => {
 });
 musicAudio.addEventListener("play", () => {
   musicHasStarted = true;
+  if (musicTrackStartedAt === 0) musicTrackStartedAt = performance.now();
   updateMusicButton();
   saveMusicState();
 });
@@ -285,12 +288,19 @@ musicAudio.addEventListener("timeupdate", () => {
   if (Number.isFinite(musicAudio.duration) && musicAudio.duration > 0) {
     musicProgress.value = String((musicAudio.currentTime / musicAudio.duration) * 100);
     musicTime.textContent = `${formatMusicTime(musicAudio.currentTime)} / ${formatMusicTime(musicAudio.duration)}`;
-    if (musicAudio.currentTime >= musicAudio.duration - 0.5) musicPlaybackReachedEnd = true;
+    if (
+      musicAudio.duration >= 30
+      && musicAudio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA
+      && musicAudio.currentTime >= musicAudio.duration - 0.5
+    ) {
+      musicPlaybackReachedEnd = true;
+    }
   }
   if (musicHasStarted) saveMusicState();
 });
 musicAudio.addEventListener("ended", () => {
-  if (!musicTrackChanging && musicPlaybackReachedEnd) {
+  const playedLongEnough = musicTrackStartedAt > 0 && performance.now() - musicTrackStartedAt > 10000;
+  if (!musicTrackChanging && musicPlaybackReachedEnd && playedLongEnough) {
     setRandomMusicTrack(true);
   }
 });
