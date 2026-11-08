@@ -177,7 +177,7 @@ async function loadMusicTracks() {
 
   const savedTrackIndex = musicTracks.indexOf(musicState.trackName);
   musicTrackIndex = savedTrackIndex >= 0 ? savedTrackIndex : Math.floor(Math.random() * musicTracks.length);
-  setMusicTrack(musicTrackIndex);
+  setMusicTrack(musicTrackIndex, musicState.isPlaying !== false);
 }
 
 function updateMusicButton() {
