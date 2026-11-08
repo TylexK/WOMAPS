@@ -92,10 +92,10 @@ let musicTrackIndex = 0;
 let musicHasStarted = false;
 let musicAutoplayPending = true;
 let musicTrackRequest = 0;
+let musicTrackChanging = false;
 
 musicPlayer.className = "music-player";
 musicPlayer.setAttribute("aria-label", "Reproductor de música");
-musicAudio.autoplay = true;
 musicAudio.muted = true;
 musicAudio.preload = "auto";
 musicAudio.setAttribute("playsinline", "");
@@ -151,11 +151,13 @@ function setMusicTrack(index, shouldPlay = false) {
   if (musicTracks.length === 0) return;
   const requestId = musicTrackRequest + 1;
   musicTrackRequest = requestId;
+  musicTrackChanging = true;
   musicTrackIndex = (index + musicTracks.length) % musicTracks.length;
   musicAudio.src = `Music/${encodeURIComponent(musicTracks[musicTrackIndex])}`;
   musicTitle.textContent = musicTracks[musicTrackIndex].replace(/\.(mp3|wav|ogg|m4a|aac|flac)$/i, "");
   musicAudio.addEventListener("loadedmetadata", () => {
     if (requestId !== musicTrackRequest) return;
+    musicTrackChanging = false;
     musicProgress.value = "0";
     musicTime.textContent = `0:00 / ${formatMusicTime(musicAudio.duration)}`;
     const savedTime = musicState.trackName === musicTracks[musicTrackIndex] ? Number(musicState.currentTime) : 0;
@@ -277,7 +279,7 @@ musicAudio.addEventListener("timeupdate", () => {
   if (musicHasStarted) saveMusicState();
 });
 musicAudio.addEventListener("ended", () => {
-  if (musicAudio.duration > 0 && musicAudio.currentTime >= musicAudio.duration - 0.25) {
+  if (!musicTrackChanging && musicAudio.duration > 0 && musicAudio.currentTime >= musicAudio.duration - 0.25) {
     setRandomMusicTrack(true);
   }
 });
