@@ -1,11 +1,11 @@
 const searchInput = document.querySelector("#mapper-search");
 
 if (searchInput) {
-  const mapperFolders = [...document.querySelectorAll(".mapper-folder")];
   const emptyState = document.querySelector("#empty-state");
 
   function filterMappers() {
     const query = searchInput.value.trim().toLocaleLowerCase("es");
+    const mapperFolders = [...document.querySelectorAll(".mapper-folder")];
     let visibleCount = 0;
 
     for (const folder of mapperFolders) {
@@ -15,6 +15,11 @@ if (searchInput) {
       let matchingRows = 0;
 
       for (const row of rows) {
+        if (!row.dataset.search) {
+          const title = row.querySelector(".mapper-details h3")?.textContent || "";
+          const description = [...row.querySelectorAll(".mapper-details p")].map((paragraph) => paragraph.textContent).join(" ");
+          row.dataset.search = `${title} ${description}`.toLocaleLowerCase("es");
+        }
         const matches = query === "" || categoryMatches || row.dataset.search.includes(query);
         row.hidden = !matches;
         if (matches) matchingRows += 1;
@@ -26,11 +31,10 @@ if (searchInput) {
       if (matches) visibleCount += 1;
     }
 
-    emptyState.hidden = visibleCount !== 0;
+    if (emptyState) emptyState.hidden = visibleCount !== 0;
   }
 
   searchInput.addEventListener("input", filterMappers);
-
   document.addEventListener("keydown", (event) => {
     if (event.key === "/" && document.activeElement !== searchInput) {
       event.preventDefault();
@@ -38,7 +42,6 @@ if (searchInput) {
     }
   });
 }
-
 const menuToggle = document.querySelector(".menu-toggle");
 const siteMenu = document.querySelector("#site-menu");
 
@@ -85,7 +88,15 @@ const fallbackMusicTracks = [
 ];
 let musicTracks = [];
 const musicStateKey = "gg-mapeadores-music";
-const musicState = JSON.parse(localStorage.getItem(musicStateKey) || "{}");
+let musicState = {};
+try {
+  const savedMusicState = JSON.parse(localStorage.getItem(musicStateKey) || "{}");
+  if (savedMusicState && typeof savedMusicState === "object" && !Array.isArray(savedMusicState)) {
+    musicState = savedMusicState;
+  }
+} catch (error) {
+  console.error("No se pudo leer el estado guardado de la música.", error);
+}
 const musicPlayer = document.createElement("section");
 const musicAudio = document.createElement("audio");
 let musicTrackIndex = 0;
@@ -108,6 +119,7 @@ musicPlayer.innerHTML = `
       <input class="music-progress" type="range" min="0" max="100" step="0.1" value="0" aria-label="Progreso de la canción">
       <span class="music-time">0:00</span>
     </div>
+    <span class="music-error" role="status" aria-live="polite"></span>
   </div>
   <div class="music-player-controls">
     <button class="music-player-button music-previous" type="button" aria-label="Canción anterior">⏮</button>
@@ -131,6 +143,16 @@ const musicVolume = musicPlayer.querySelector(".music-volume");
 const musicVolumeToggle = musicPlayer.querySelector(".music-volume-toggle");
 const musicProgress = musicPlayer.querySelector(".music-progress");
 const musicTime = musicPlayer.querySelector(".music-time");
+const musicError = musicPlayer.querySelector(".music-error");
+
+function reportMusicPlaybackError(error) {
+  console.error("No se pudo reproducir la música.", error);
+  musicError.textContent = error.name === "NotAllowedError"
+    ? "Pulsa reproducir para activar el audio."
+    : "No se pudo cargar el audio. Abre el sitio desde Vercel o un servidor local.";
+  musicPlayButton.textContent = "▶";
+  musicPlayButton.setAttribute("aria-label", "Reproducir música");
+}
 
 function formatMusicTime(seconds) {
   if (!Number.isFinite(seconds)) return "0:00";
@@ -169,10 +191,7 @@ function setMusicTrack(index, shouldPlay = false) {
       musicAudio.currentTime = savedTime;
     }
     if ((shouldPlay || musicAutoplayPending) && musicAudio.duration > 0) {
-      musicAudio.play().catch(() => {
-        musicPlayButton.textContent = "▶";
-        musicPlayButton.setAttribute("aria-label", "Reproducir música");
-      });
+      musicAudio.play().catch(reportMusicPlaybackError);
     }
   }, { once: true });
   musicAudio.load();
@@ -189,6 +208,10 @@ function setRandomMusicTrack(shouldPlay = false) {
     nextIndex = Math.floor(Math.random() * musicTracks.length);
   }
   setMusicTrack(nextIndex, shouldPlay);
+}
+
+function changeMusicTrack(offset) {
+  if (!musicTrackChanging) setMusicTrack(musicTrackIndex + offset, true);
 }
 
 async function loadMusicTracks() {
@@ -224,11 +247,10 @@ function updateMusicButton() {
 function activateMusic() {
   musicAutoplayPending = false;
   musicAudio.muted = false;
-  musicAudio.play().then(updateMusicButton).catch((error) => {
-    console.error("No se pudo reproducir la música.", error);
-    musicPlayButton.textContent = "▶";
-    musicPlayButton.setAttribute("aria-label", "Reproducir música");
-  });
+  musicAudio.play().then(() => {
+    musicError.textContent = "";
+    updateMusicButton();
+  }).catch(reportMusicPlaybackError);
 }
 
 function toggleMusic(event) {
@@ -245,19 +267,19 @@ musicPlayButton.addEventListener("click", toggleMusic);
 musicPreviousButton.addEventListener("click", (event) => {
   event.preventDefault();
   event.stopPropagation();
-  if (!musicTrackChanging) setRandomMusicTrack(true);
+  changeMusicTrack(-1);
 });
 musicNextButton.addEventListener("click", (event) => {
   event.preventDefault();
   event.stopPropagation();
-  if (!musicTrackChanging) setRandomMusicTrack(true);
+  changeMusicTrack(1);
 });
 musicVolume.addEventListener("input", () => {
   musicAudio.volume = Number(musicVolume.value);
   if (musicAudio.volume > 0) {
     musicAutoplayPending = false;
     musicAudio.muted = false;
-    if (musicAudio.paused) musicAudio.play().catch(() => {});
+    if (musicAudio.paused) musicAudio.play().catch(reportMusicPlaybackError);
   }
   updateMusicButton();
   saveMusicState();
@@ -266,7 +288,7 @@ musicVolumeToggle.addEventListener("click", (event) => {
   event.preventDefault();
   event.stopPropagation();
   musicAudio.muted = !musicAudio.muted;
-  if (!musicAudio.muted && musicAudio.paused) musicAudio.play().catch(() => {});
+  if (!musicAudio.muted && musicAudio.paused) musicAudio.play().catch(reportMusicPlaybackError);
   updateMusicButton();
   saveMusicState();
 });
@@ -275,10 +297,15 @@ musicProgress.addEventListener("input", () => {
   musicAudio.currentTime = (Number(musicProgress.value) / 100) * musicAudio.duration;
 });
 musicAudio.addEventListener("play", () => {
+  musicError.textContent = "";
   musicHasStarted = true;
   if (musicTrackStartedAt === 0) musicTrackStartedAt = performance.now();
   updateMusicButton();
   saveMusicState();
+});
+musicAudio.addEventListener("error", () => {
+  musicTrackChanging = false;
+  reportMusicPlaybackError(new Error("La fuente de audio no se pudo cargar."));
 });
 musicAudio.addEventListener("pause", () => {
   updateMusicButton();

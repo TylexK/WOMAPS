@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="script.js" defer></script>
+  <script type="module" src="supabase-app.js"></script>
 </head>
 <body>
   <header class="topbar">
@@ -42,10 +43,10 @@
       </div>
       <div class="intro-aside" aria-label="Resumen del catálogo">
         <span class="aside-label">DISPONIBLES AHORA</span>
-        <span class="aside-number">38</span>
+        <span class="aside-number">0</span>
         <span class="aside-caption">mapeadores disponibles actualmente</span>
         <span class="aside-rule"></span>
-        <span class="aside-note">SS KEYMOUSE PRO:<br>2 DISPONIBLES</span>
+        <span class="aside-note">CARGANDO CATEGORÍAS…</span>
       </div>
       <span class="intro-index" aria-hidden="true">GG / 2026</span>
     </section>
@@ -62,6 +63,9 @@
           <input id="mapper-search" type="search" placeholder="Buscar descarga..." autocomplete="off">
           <kbd>/</kbd>
         </label>
+      </div>
+      <div class="catalog-admin-access">
+        <button class="admin-button" id="admin-open" type="button">ADMINISTRAR CATÁLOGO</button>
       </div>
 
       <div class="mapper-list" id="mapper-list">
@@ -821,9 +825,55 @@
       </div>
 
       <p class="empty-state" id="empty-state" hidden>No hay descargas que coincidan con tu búsqueda.</p>
+      <p class="admin-status catalog-status" id="catalog-status" role="status" aria-live="polite" hidden></p>
       <p class="catalog-note"><span class="note-mark">i</span> Las descargas se alojan en MediaFire. Revisa cada archivo antes de instalarlo.</p>
     </section>
   </main>
+
+  <dialog class="admin-dialog" id="catalog-admin" aria-labelledby="admin-title">
+    <div class="admin-dialog-header">
+      <div>
+        <p class="section-kicker">ACCESO DE MAPEADORES</p>
+        <h2 id="admin-title">Administrar catálogo</h2>
+      </div>
+      <button class="admin-close" id="admin-close" type="button" aria-label="Cerrar">×</button>
+    </div>
+    <p class="admin-security-note">La administración requiere una cuenta de Google autorizada. Los permisos se validan en Supabase y las reglas RLS bloquean cambios desde cuentas normales.</p>
+    <form class="admin-login-form" id="admin-login">
+      <button class="admin-button" type="submit">CONTINUAR CON GOOGLE</button>
+    </form>
+    <p class="admin-status" id="admin-login-status" role="status" aria-live="polite"></p>
+    <p class="admin-security-note" id="admin-no-permission" hidden>Tu cuenta está conectada, pero no tiene permisos de administración.</p>
+
+    <section class="admin-dashboard" id="admin-dashboard" hidden>
+      <div class="admin-session" id="admin-session">
+        <span id="admin-user-label"></span>
+        <button class="admin-button admin-button-muted" id="admin-logout" type="button">CERRAR SESIÓN</button>
+      </div>
+      <button class="admin-button catalog-seed" id="catalog-seed" type="button" hidden>PUBLICAR CATÁLOGO INICIAL</button>
+      <div class="admin-forms">
+        <form id="admin-folder-form">
+          <h3>Agregar carpeta</h3>
+          <label>Nombre de carpeta<input name="name" maxlength="70" required></label>
+          <button class="admin-button" type="submit">AGREGAR CARPETA</button>
+        </form>
+        <form id="admin-mapper-form">
+          <h3 id="mapper-form-title">Agregar mapeador</h3>
+          <input name="mapperId" type="hidden">
+          <label>Carpeta<select name="folderId" required></select></label>
+          <label>Nombre<input name="name" maxlength="100" required></label>
+          <label>Descripción<input name="description" maxlength="180"></label>
+          <label>Tipo de archivo<input name="fileType" maxlength="30" placeholder="APK, ZIP, ROOT…"></label>
+          <label>Enlace de descarga *<input name="url" type="url" placeholder="https://…" required></label>
+          <div class="admin-form-actions">
+            <button class="admin-button" type="submit" id="mapper-form-submit">AGREGAR MAPEADOR</button>
+            <button class="admin-button admin-button-muted" type="button" id="mapper-form-cancel" hidden>Cancelar edición</button>
+          </div>
+        </form>
+      </div>
+      <p class="admin-status" id="admin-dashboard-status" role="status" aria-live="polite"></p>
+    </section>
+  </dialog>
 
   <footer class="footer">
     <span>GG MAPEADORES <span class="footer-divider">/</span> CENTRO DE DESCARGAS</span>
